@@ -94,17 +94,21 @@ Standard classification networks with Softmax output layers fail in clinical ope
 
 We formulate metric learning using SubCenter ArcFace with $K = 3$ sub-centers per class:
 
-$$\mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{e^{s \cdot \cos(\theta_{y_i, j^*} + m)}}{e^{s \cdot \cos(\theta_{y_i, j^*} + m)} + \sum_{j \neq y_i} \sum_{k=1}^{K} e^{s \cdot \cos \theta_{j, k}}}$$
+$$
+\mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{e^{s \cdot \cos(\theta_{y_i, j^{\ast}} + m)}}{e^{s \cdot \cos(\theta_{y_i, j^{\ast}} + m)} + \sum_{j \neq y_i} \sum_{k=1}^{K} e^{s \cdot \cos \theta_{j, k}}}
+$$
 
 where:
-* $s = 20.0$ is the hypersphere radius scale factor.
-* $m = 0.50$ is the additive angular margin enforcing compact intra-class variance.
-* $j^* = \arg\max_k (\cos \theta_{y_i, k})$ selects the dominant sub-center corresponding to the active face (Face A or Face B).
+- $s = 20.0$ is the hypersphere radius scale factor.
+- $m = 0.50$ is the additive angular margin enforcing compact intra-class variance.
+- $j^{\ast} = \operatorname{argmax}_k (\cos \theta_{y_i, k})$ selects the dominant sub-center corresponding to the active face (Face A or Face B).
 
 ### Multi-Exemplar k-NN Scoring
 To prevent prototype dilution caused by averaging distinct physical faces into a single centroid vector, the reference bank retains up to 8 exemplars per class. Query similarity to class $c$ is computed via Top-2 k-NN mean pooling:
 
-$$S(q, c) = \frac{1}{\min(2, |R_c|)} \sum_{k=1}^{\min(2, |R_c|)} \text{Top-k} \left( \{ \langle e_q, e_r \rangle \mid e_r \in R_c \} \right)$$
+$$
+S(q, c) = \frac{1}{\min(2, |R_c|)} \sum_{k=1}^{\min(2, |R_c|)} \operatorname{Top-k} \left( \left\{ \langle e_q, e_r \rangle \mid e_r \in R_c \right\} \right)
+$$
 
 ---
 
@@ -130,7 +134,7 @@ Below are real patient test pill crops processed by the pipeline directly on Kag
 ![Live Kaggle Test Sample Verification Grid](docs/assets/sample_test_cases_grid.png)
 
 > [!NOTE]
-> **Interpretation of Session Safety**: When evaluated at the true clinical dose level (1 to 5 pills ingested per meal), the system achieves 64.93% complete session safety across all 288 diverse real patients. The multi-angle session safety metric of 39.09% is driven by sessions containing up to 71 photos taken over multiple days; mathematically $(0.98)^{71} \approx 24\%$, where a single blurred shot flags the whole multi-day session.
+> **Interpretation of Session Safety**: When evaluated at the true clinical dose level (1 to 5 pills ingested per meal), the system achieves 64.93% complete session safety across all 288 diverse real patients. The multi-angle session safety metric of 39.09% is driven by sessions containing up to 71 photos taken over multiple days; mathematically $(0.98)^{71} \approx 0.24$ (approx. 24%), where a single blurred shot flags the whole multi-day session.
 
 ---
 
