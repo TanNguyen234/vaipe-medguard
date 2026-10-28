@@ -1,0 +1,19 @@
+{
+  "id": "foxy0505/vaipe-medguard-pipeline",
+  "title": "VAIPE MedGuard Pipeline",
+  "code_file": "vaipe_medguard_pipeline.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "foxy0505/vaipe-medguard-weights",
+    "litrdng/vaipe-p",
+    "tommyngx/vaipepill2022labelanot"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
