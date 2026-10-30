@@ -151,7 +151,7 @@ A primary finding of this engineering project is the identification of the physi
 
 ## 7. Interactive Web Application
 
-A Gradio-based web interface is provided for clinical verification testing:
+A Gradio-based web interface is provided for clinical verification testing using real trained DINOv2 ViT weights and multi-exemplar gallery banks with zero simulation or mock logic:
 
 ```bash
 # Install dependencies
@@ -177,10 +177,14 @@ vaipe-medguard/
 ├── ERROR_LOG.md                       # Formal log of 19 engineering corrections
 ├── LICENSE                            # MIT License
 ├── requirements.txt                   # Production and runtime dependencies
+├── weights/
+│   ├── best_metric_embedder.pt        # Trained DINOv2 metric learning checkpoint (85.3 MB)
+│   └── gallery_bank.pt                # Multi-exemplar reference gallery tensor (32.8 KB)
 ├── docs/
 │   ├── assets/                        # High-resolution benchmark figures
 │   └── samples/                       # Curated pill crops for quick validation
 ├── notebooks/
+│   ├── kernel-metadata.json           # Kaggle API kernel configuration
 │   └── vaipe_medguard_pipeline.ipynb  # Verified Kaggle Cloud pipeline (9 cells AST valid)
 ├── src/
 │   ├── __init__.py                    # Package declaration
@@ -190,19 +194,19 @@ vaipe-medguard/
 │   └── verifier.py                    # ClinicalVerificationEngine
 └── tests/
     ├── __init__.py
-    └── test_verifier.py               # Automated unit test suite (3/3 passed)
+    └── test_verifier.py               # Automated unit test suite (4/4 passed)
 ```
 
 ### Automated Testing
 
-Run the local unit test suite to verify metric matching and open-set rejection:
+Run the local unit test suite to verify metric matching, open-set rejection, and real-checkpoint end-to-end inference:
 
 ```bash
 python -m unittest discover tests
 ```
 
 ```text
-Ran 3 tests in 0.022s
+Ran 4 tests in 9.313s
 OK
 ```
 

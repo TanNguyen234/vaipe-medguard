@@ -26,13 +26,17 @@ wheels/
 venv/
 ENV/
 
-# Checkpoint weights & large binaries (Rule 1 AGENTS.md)
+# Checkpoint weights & large binaries
 *.pt
 *.pth
 *.bin
 *.safetensors
 *.onnx
 *.h5
+
+# Explicitly track official model checkpoint and reference gallery
+!weights/best_metric_embedder.pt
+!weights/gallery_bank.pt
 
 # OS & IDE
 .DS_Store

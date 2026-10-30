@@ -14,10 +14,7 @@ class TestClinicalVerificationEngine(unittest.TestCase):
             rejection_threshold=0.60,
             foreign_drug_margin=0.15
         )
-        # Create synthetic gallery with 3 classes, 2 exemplars each, dim=32
-        # Class A: label_0 (aligned with dim 0)
-        # Class B: label_1 (aligned with dim 1)
-        # Class C: label_2 (aligned with dim 2)
+        # Synthetic gallery with 3 classes, 2 exemplars each, dim=32
         dim = 32
         v_0_a = torch.zeros(dim); v_0_a[0] = 1.0
         v_0_b = torch.zeros(dim); v_0_b[0] = 0.9; v_0_b[3] = 0.1; v_0_b = F.normalize(v_0_b, dim=0)
@@ -46,7 +43,6 @@ class TestClinicalVerificationEngine(unittest.TestCase):
 
     def test_single_dose_safe_verification(self):
         """Kiểm tra đối soát cữ uống đơn (1-3 viên) thuộc danh mục kê đơn."""
-        # Query 1: label_0, Query 2: label_1
         q0 = self.gallery_tensor[0:1] # exact label_0
         q1 = self.gallery_tensor[2:3] # exact label_1
         query_embs = torch.cat([q0, q1], dim=0)
@@ -68,7 +64,6 @@ class TestClinicalVerificationEngine(unittest.TestCase):
 
     def test_foreign_drug_rejection(self):
         """Kiểm tra khả năng chặn đứng thuốc lạ (label_2) khi đơn chỉ kê label_0 và label_1."""
-        # Bệnh nhân uống nhầm viên label_2 (thuốc lạ nguy hiểm)
         q_foreign = self.gallery_tensor[4:5] # exact label_2
         prescribed_candidates = ["label_0", "label_1"] # Không có label_2
 
@@ -79,7 +74,6 @@ class TestClinicalVerificationEngine(unittest.TestCase):
         )
 
         self.assertEqual(result["pills_count"], 1)
-        # Bị phát hiện là thuốc lạ không được phép
         self.assertFalse(result["session_safe"])
         self.assertEqual(result["details"][0]["status"], "WRONG_UNAUTHORIZED_DRUG")
         self.assertEqual(result["details"][0]["con_pred"], "label_2")
@@ -100,6 +94,46 @@ class TestClinicalVerificationEngine(unittest.TestCase):
         self.assertFalse(result["session_safe"])
         self.assertEqual(result["details"][0]["status"], "UNKNOWN_MEDICATION")
         self.assertEqual(result["details"][0]["con_pred"], "UNKNOWN")
+
+    def test_real_weights_and_gallery_end_to_end(self):
+        """Kiểm tra end-to-end với trọng số checkpoint thật và ảnh thật trong docs/samples/."""
+        from pathlib import Path
+        from PIL import Image
+        from src.model import DINOv2MetricEmbedder
+        from src.dataset import get_eval_transforms
+        
+        root = Path(__file__).resolve().parent.parent
+        weights_file = root / "weights" / "best_metric_embedder.pt"
+        gallery_file = root / "weights" / "gallery_bank.pt"
+        sample_img_file = root / "docs" / "samples" / "sample_paracetamol_500mg.jpg"
+        
+        if not (weights_file.exists() and gallery_file.exists() and sample_img_file.exists()):
+            self.skipTest("Trọng số thật hoặc ảnh mẫu chưa có mặt trên môi trường.")
+            
+        model = DINOv2MetricEmbedder(pretrained=False, embedding_dim=384)
+        model.load_weights(str(weights_file), device="cpu")
+        model.eval()
+        
+        bank = torch.load(str(gallery_file), map_location="cpu")
+        engine = ClinicalVerificationEngine(
+            gallery_ref_tensor=bank["gallery_tensor"],
+            gallery_ref_labels=bank["gallery_labels"],
+            unique_gallery_classes=bank["unique_classes"],
+            class_to_ref_indices=bank["class_to_indices"],
+            config=self.config
+        )
+        
+        tf = get_eval_transforms()
+        im = Image.open(str(sample_img_file)).convert("RGB")
+        with torch.no_grad():
+            emb = model(tf(im).unsqueeze(0))
+            
+        res = engine.verify_pills(emb, candidate_classes=["label_0", "label_1", "label_10"])
+        detail = res["details"][0]
+        self.assertEqual(detail["status"], "MATCH_CONFIRMED")
+        self.assertEqual(detail["con_pred"], "label_0")
+        self.assertGreaterEqual(detail["con_score"], 0.60)
+        self.assertTrue(res["session_safe"])
 
 
 if __name__ == "__main__":
